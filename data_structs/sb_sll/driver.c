@@ -18,9 +18,10 @@ int main(int argc, char ** argv)
 	while (!sll_empty(list)) {
 		element = (int *) sll_front(list);
 		printf("element: %d\n", *element);
-		sll_free_front(list);
+		sll_remove_front(list);
+		free(element);
 	}
 
-	free(list);
+	sll_destroy(list);
 	return EXIT_SUCCESS;
 }

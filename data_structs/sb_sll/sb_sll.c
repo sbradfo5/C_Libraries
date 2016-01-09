@@ -45,29 +45,11 @@ void sll_remove_front(sb_sll * instance)
 	instance->size--;
 }
 
-void sll_remove_all(sb_sll * instance)
+void sll_destroy(sb_sll * instance)
 {
 	while(!sll_empty(instance)) {
 		sll_remove_front(instance);
 	}
 	
-	free(instance);
-}
-
-void sll_free_front(sb_sll * instance)
-{
-	sb_sll_node * old = instance->head;
-	instance->head = old->next;
-	free(old->elem);
-	free(old);
-	instance->size--;
-}
-
-void sll_free_all(sb_sll * instance)
-{
-	while(!sll_empty(instance)) {
-		sll_free_front(instance);
-	}
-
 	free(instance);
 }

@@ -22,10 +22,6 @@ void sll_add_front(sb_sll *, void * elem);
 
 /* removes and frees nodes but does not free elements */
 void sll_remove_front(sb_sll *);
-void sll_remove_all(sb_sll *);
-
-/* removes and frees nodes AND frees elements: useful for malloc */
-void sll_free_front(sb_sll *);
-void sll_free_all(sb_sll *);
+void sll_destroy(sb_sll *);
 
 #endif
