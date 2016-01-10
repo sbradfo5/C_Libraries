@@ -10,8 +10,6 @@ typedef struct sb_dll_node_s {
 typedef struct sb_dll_s {
 	sb_dll_node * header;
 	sb_dll_node * trailer;
-	sb_dll_node * pos;
-	int size;
 } sb_dll;
 
 sb_dll * dll_init();

@@ -9,7 +9,6 @@ sb_dll * dll_init()
 	instance->trailer = (sb_dll_node *) malloc(sizeof(sb_dll_node));
 	instance->header->next = instance->trailer;
 	instance->trailer->prev = instance->header;
-	instance->size = 0;
 	return instance;
 }
 
