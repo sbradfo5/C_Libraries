@@ -93,3 +93,18 @@ void dll_foreach(sb_dll * instance, void (*call_back)(void * d, void * e), void 
 		call_back(data, pos->elem);
 	}
 }
+
+sb_dll_node * dll_begin(sb_dll * instance)
+{
+	return instance->header->next;
+}
+
+sb_dll_node * dll_end(sb_dll * instance)
+{
+	return instance->trailer;
+}
+
+void * dll_get_node_val(sb_dll_node * v)
+{
+	return v->elem;
+}

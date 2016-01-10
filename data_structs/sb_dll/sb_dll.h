@@ -36,4 +36,17 @@ void dll_remove(sb_dll_node * v);
 
 void dll_foreach(sb_dll * instance, void (*call_back)(void * d, void * e), void * data);
 
+/* Iterator code for traversing without knowing structure. */
+sb_dll_node * dll_begin(sb_dll * instance);
+
+sb_dll_node * dll_end(sb_dll * instance);
+
+// Moves v forward one node. 
+int dll_next_node(sb_dll_node * v);
+
+// Moves v back one node.
+int dll_prev_node(sb_dll_node * v);
+
+void * dll_get_node_val(sb_dll_node * v);
+
 #endif
