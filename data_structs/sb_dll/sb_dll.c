@@ -76,11 +76,17 @@ void dll_remove(sb_dll_node * v)
 
 void dll_remove_front(sb_dll * instance)
 {
+	if (dll_empty(instance)) {
+		return;
+	}
 	dll_remove(instance->header->next);
 }
 
 void dll_remove_back(sb_dll * instance)
 {
+	if (dll_empty(instance)) {
+		return;
+	}
 	dll_remove(instance->trailer->prev);
 }
 
