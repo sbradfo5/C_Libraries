@@ -42,20 +42,27 @@ int main(int argc, char ** argv)
 	*val = 100;
 	avl_insert(tree, (void *) string, (void *) val);
 
+	printf("fine here.\n");
+
 	string = strdup("Bekah");
 	val = (int *) malloc(sizeof(int));
 	*val = 150;
 	avl_insert(tree, (void *) string, (void *) val);
+
+	printf("still fine.\n");
 
 	string = strdup("Debra");
 	val = (int *) malloc(sizeof(int));
 	*val = 45;
 	avl_insert(tree, (void *) string, (void *) val);
 
+	printf("a-ok.\n");
 	coreyStr = strdup("Corey");
 	coreyVal = (int *) malloc(sizeof(int));
 	*coreyVal = 80;
 	avl_insert(tree, (void *) coreyStr, (void *) coreyVal);
+
+	printf("made it through the inserts.\n");
 
 	printf("AVL size: %d\n", avl_size(tree));
 
@@ -77,23 +84,6 @@ int main(int argc, char ** argv)
 	else {
 		printf("Zach was found? Error.\n");
 	}
-
-	// let's delete someone
-	avl_erase(tree, "Corey");
-	printf("Corey deleted.\n");
-
-	// and then search for them
-	val = (int *) avl_find(tree, "Corey");
-	if (val == NULL) {
-		printf("Corey Not found. Success.\n");
-	}
-	else {
-		printf("Corey was found? Error.\n");
-	}
-
-	// Free Corey's memory, since we deleted his node earlier
-	free(coreyStr);
-	free(coreyVal);
 
 	// let's go through them now that one is gone.
 	avl_preorder(tree->root, print_elements, NULL);

@@ -2,6 +2,8 @@
 #include "sb_stack.h"
 #include <stdlib.h>
 
+/** User Interface Procedures **/
+//*****************************************************************************
 sb_avl * avl_init(int (*comp)(void * a, void * b))
 {
 	sb_avl * instance;
@@ -27,24 +29,64 @@ void avl_destroy(sb_avl * instance)
 		stack_pop(s);
 	}
 	stack_destroy(s);
+	free(instance->root);
 	free(instance);
 	return;
 }
 
-void avl_insert(sb_avl * instance, void * key, void * data)
+avl_node * avl_root(sb_avl * instance)
 {
-	instance->root = avl_insert_node(instance->root, key, data, instance->cmp_keys);
+	return instance->root;
 }
 
 void avl_erase(sb_avl * instance, void * key)
 {
-	instance->root = avl_delete_node(instance->root, key, instance->cmp_keys);
+	avl_node * v = avl_finder(key, avl_root(instance), instance->cmp_keys);
+	if ( v == NULL ) {
+		return;
+	}
+	avl_node * w = avl_delete(instance, v);
+	avl_rebalance(instance, w);
+}
+
+void avl_preorder(avl_node * root, void (*call_back)(avl_node * n, void * d), void * user_data)
+{
+	if (root != NULL)
+	{
+		call_back(root, user_data);
+		avl_preorder(root->left, call_back, user_data);
+		avl_preorder(root->right, call_back, user_data);
+	}
+}
+
+void avl_inorder(avl_node * root, void (*call_back)(avl_node * n, void * d), void * user_data)
+{
+	if (root != NULL)
+	{
+		avl_inorder(root->left, call_back, user_data);
+		call_back(root, user_data);
+		avl_inorder(root->right, call_back, user_data);
+	}
+
+	return;
+}
+
+void avl_postorder(avl_node * root, void (*call_back)(avl_node * n, void * d), void * user_data)
+{
+	if (root != NULL)
+	{
+		avl_postorder(root->left, call_back, user_data);
+		avl_postorder(root->right, call_back, user_data);
+		call_back(root, user_data);
+	}
+
+	return;
 }
 
 void * avl_find(sb_avl * instance, void * key)
 {
 	avl_node * tmp;
-	tmp = avl_find_node(instance->root, key, instance->cmp_keys);
+	tmp = avl_finder(key, avl_root(instance), instance->cmp_keys);
 	if (tmp == NULL) {
 		return NULL;
 	}
@@ -62,40 +104,150 @@ int avl_size(sb_avl * instance)
 	return 0;
 }
 
-void avl_preorder(avl_node * root, void (*call_back)(avl_node * n, void * d), void * user_data)
+void avl_insert(sb_avl * instance, void * key, void * data)
 {
-	if(root != NULL)
-	{
-		call_back(root, user_data);
-		avl_preorder(root->left, call_back, user_data);
-		avl_preorder(root->right, call_back, user_data);
+	avl_node * root = avl_root(instance);
+	avl_node * z = avl_new_node(key, data);
+	z->parent = NULL;
+	avl_node * x = root;
+	while (x != NULL) {
+		z->parent = x;
+		if (instance->cmp_keys(z->key, x->key) < 0) {
+			x = x->left;
+		}
+		else {
+			x = x->right;
+		}
+	}
+	if (z->parent == NULL) {
+		instance->root = z;
+	}
+	else if (instance->cmp_keys(z->key, z->parent->key) < 0) {
+		z->parent->left = z;
+	}
+	else {
+		z->parent->right = z;
+	}
+
+	avl_set_height(z);
+	avl_rebalance(instance, z);
+	return;
+}
+
+avl_node * avl_find_min(sb_avl * instance)
+{
+	avl_node * x = avl_root(instance);
+	while (x->left != NULL) {
+		x = x->left;
+	}
+	return x;
+}
+
+avl_node * avl_find_max(sb_avl * instance)
+{
+	avl_node * x = avl_root(instance);
+	while (x->right != NULL) {
+		x = x->right;
+	}
+	return x;
+}
+//*****************************************************************************
+
+/** Internal Functions: not meant to be called by user **/
+//*****************************************************************************
+
+/* Helper function that allocates a new node with the given key and data with
+   NULL left, right, and parent pointers. Sets height to -1, designed to mean 
+   unspecified. */
+avl_node * avl_new_node(void * key, void * data)
+{
+	avl_node * node = (avl_node *) malloc(sizeof(avl_node));
+	node->key = key;
+	node->value = data;
+	node->left = NULL;
+	node->right = NULL;
+	node->parent = NULL;
+	node->height = 0; // not yet set
+	return(node);
+}
+
+int avl_height(avl_node * v)
+{
+	if (v == NULL)
+		return 0;
+	return (avl_is_external(v)) ? 0 : v->height;
+}
+
+void avl_set_height(avl_node * v)
+{
+	int hl = avl_height(v->left);
+	int hr = avl_height(v->right);
+	v->height = 1 + avl_max(hl, hr);
+}
+
+int avl_max(int a, int b)
+{
+	if ( a > b )
+		return a;
+	else
+		return b;
+}
+
+int avl_is_balanced(avl_node * v)
+{
+	int bal = avl_height(v->left) - avl_height(v->right);
+	return ((-1 <= bal) && (bal <= 1));
+}
+
+avl_node * avl_tall_grandchild(avl_node * z)
+{
+	avl_node * zl = z->left;
+	avl_node * zr = z->right;
+	if (avl_height(zl) >= avl_height(zr)) {
+		if (avl_height(zl->left) >= avl_height(zl->right)) {
+			return zl->left;
+		}
+		else {
+			return zl->right;
+		}
+	}
+	else {
+		if (avl_height(zr->right) >= avl_height(zr->left)) {
+			return zr->right;
+		}
+		else {
+			return zr->left;
+		}
 	}
 }
 
-void avl_inorder(avl_node * root, void (*call_back)(avl_node * n, void * d), void * user_data)
+void avl_expand_external(avl_node * p) 
 {
-	if(root != NULL)
-	{
-		avl_inorder(root->left, call_back, user_data);
-		call_back(root, user_data);
-		avl_inorder(root->right, call_back, user_data);
+	// already has children
+	if (avl_is_internal(p)) {
+		return;
 	}
+	avl_node * v = p;
+	v->left = avl_new_node(NULL, NULL);
+	v->left->parent = v;
+	v->right = avl_new_node(NULL, NULL);
+	v->right->parent = v;
+	return;
 }
 
-void avl_postorder(avl_node * root, void (*call_back)(avl_node * n, void * d), void * user_data)
+int avl_is_internal(avl_node * v)
 {
-	if(root != NULL)
-	{
-		avl_postorder(root->left, call_back, user_data);
-		avl_postorder(root->right, call_back, user_data);
-		call_back(root, user_data);
-	}
+	if (v == NULL)
+		return 0;
+	return (v->left != NULL || v->right != NULL);
 }
 
-/* 
-   Everything below this point is 'private'. You should not be calling these
-   unless you are very comfortable with the structure of the AVL tree
-*/
+int avl_is_external(avl_node * v)
+{
+	if (v == NULL)
+		return 0;
+	return (v->left == NULL && v->right == NULL);
+}
 
 void avl_destroy_callback(avl_node * n, void * d)
 {
@@ -103,16 +255,16 @@ void avl_destroy_callback(avl_node * n, void * d)
 	stack_push(s, (void *) n);
 }
 
-avl_node * avl_find_node(avl_node * node, void * key, int (*cmp_keys)(void * a, void * b))
+avl_node * avl_finder(void * key, avl_node * node, int (*cmp_keys)(void * a, void * b))
 {
 	if (node == NULL || cmp_keys(node->key, key) == 0) {
 		return node;
 	}
 	else if (cmp_keys(key, node->key) < 0) {
-		return avl_find_node(node->left, key, cmp_keys);
+		return avl_finder(key, node->left, cmp_keys);
 	}
 	else {
-		return avl_find_node(node->right, key, cmp_keys);
+		return avl_finder(key, node->right, cmp_keys);
 	}
 }
 
@@ -125,71 +277,6 @@ int avl_size_helper(avl_node * root)
 	return n;
 }
 
-// A utility function to get height of the tree
-int avl_height(avl_node * N)
-{
-	if (N == NULL)
-		return 0;
-	return N->height;
-}
-
-// A utility function to get maximum of two integers
-int avl_max(int a, int b)
-{
-	return (a > b)? a : b;
-}
-
-/* Helper function that allocates a new node with the given key and
-   NULL left and right pointers. */
-avl_node * avl_new_node(void * key, void * data)
-{
-	avl_node * node = (avl_node *) malloc(sizeof(avl_node));
-	node->key = key;
-	node->value = data;
-	node->left = NULL;
-	node->right = NULL;
-	node->height = 1;  // new node is initially added at leaf
-	return(node);
-}
-
-// A utility function to right rotate subtree rooted with y
-// See the diagram given above.
-avl_node * avl_right_rotate(avl_node * y)
-{
-	avl_node * x = y->left;
-	avl_node * T2 = x->right;
-
-	// Perform rotation
-	x->right = y;
-	y->left = T2;
-
-	// Update heights
-	y->height = avl_max(avl_height(y->left), avl_height(y->right))+1;
-	x->height = avl_max(avl_height(x->left), avl_height(x->right))+1;
-
-	// Return new root
-	return x;
-}
-
-// A utility function to left rotate subtree rooted with x
-// See the diagram given above.
-avl_node * avl_left_rotate(avl_node * x)
-{
-	avl_node * y = x->right;
-	avl_node * T2 = y->left;
-
-	// Perform rotation
-	y->left = x;
-	x->right = T2;
-
-	//  Update heights
-	x->height = avl_max(avl_height(x->left), avl_height(x->right))+1;
-	y->height = avl_max(avl_height(y->left), avl_height(y->right))+1;
-
-	// Return new root
-	return y;
-}
-
 // Get Balance factor of node N
 int avl_get_balance(avl_node * N)
 {
@@ -198,151 +285,179 @@ int avl_get_balance(avl_node * N)
 	return avl_height(N->left) - avl_height(N->right);
 }
 
-avl_node * avl_insert_node(avl_node * node, void * key, void * data, int (*cmp_keys)(void * a, void * b))
+void avl_make_left_child(avl_node * a, avl_node * b)
 {
-	/* 1. Perform the normal BST rotation */
-	if (node == NULL)
-		return avl_new_node(key, data);
-
-	if (cmp_keys(key, node->key) < 0)
-		node->left  = avl_insert_node(node->left, key, data, cmp_keys);
-	else
-		node->right = avl_insert_node(node->right, key, data, cmp_keys);
-
-	/* 2. Update height of this ancestor node */
-	node->height = avl_max(avl_height(node->left), avl_height(node->right)) + 1;
-
-	/* 3. Get the balance factor of this ancestor node to check whether
-	   this node became unbalanced */
-	int balance = avl_get_balance(node);
-
-	// If this node becomes unbalanced, then there are 4 cases
-
-	// Left Left Case
-	if (balance > 1 && cmp_keys(key, node->left->key) < 0)
-		return avl_right_rotate(node);
-
-	// Right Right Case
-	if (balance < -1 && cmp_keys(key, node->right->key) > 0)
-		return avl_left_rotate(node);
-
-	// Left Right Case
-	if (balance > 1 && cmp_keys(key, node->left->key) > 0)
-	{
-		node->left =  avl_left_rotate(node->left);
-		return avl_right_rotate(node);
-	}
-
-	// Right Left Case
-	if (balance < -1 && cmp_keys(key, node->right->key) < 0)
-	{
-		node->right = avl_right_rotate(node->right);
-		return avl_left_rotate(node);
-	}
-
-	/* return the (unchanged) node pointer */
-	return node;
+	a->left = b;
+	b->parent = a;
 }
 
-/* Given a non-empty binary search tree, return the node with minimum
-   key value found in that tree. Note that the entire tree does not
-   need to be searched. */
-avl_node * avl_min_value_node(avl_node * node)
+void avl_make_right_child(avl_node * a, avl_node * b)
 {
-	avl_node * current = node;
-
-	/* loop down to find the leftmost leaf */
-	while (current->left != NULL)
-		current = current->left;
-
-	return current;
+	a->right = b;
+	b->parent = a;
 }
 
-avl_node * avl_delete_node(avl_node * root, void * key, int (*cmp_keys)(void * a, void * b))
+avl_node * avl_restructure(sb_avl * instance, avl_node * x)
 {
-	// STEP 1: PERFORM STANDARD BST DELETE
+	avl_node * y = x;
+	avl_node * z = y->parent;
+	avl_node * a, * b, * c;
+	avl_node * root;
+	root = avl_root(instance);
 
-	if (root == NULL)
-		return root;
+	if (instance->cmp_keys(z->key, x->key) <= 0 && 
+			instance->cmp_keys(x->key, y->key) <= 0) {
+		a = z; b = x; c = y;
+	}	
+	if (instance->cmp_keys(z->key, x->key) >= 0 && 
+			instance->cmp_keys(x->key, y->key) >= 0) {
+		a = y; b = x; c = z;
+	}	
+	if (instance->cmp_keys(z->key, y->key) <= 0 && 
+			instance->cmp_keys(y->key, x->key) <= 0) {
+		a = z; b = y; c = x;
+	}	
+	if (instance->cmp_keys(z->key, y->key) >= 0 && 
+			instance->cmp_keys(y->key, x->key) >= 0) {
+		a = x; b = y; c = z;
+	}
 
-	// If the key to be deleted is smaller than the root's key,
-	// then it lies in left subtree
-	if ( cmp_keys(key, root->key) < 0 )
-		root->left = avl_delete_node(root->left, key, cmp_keys);
-
-	// If the key to be deleted is greater than the root's key,
-	// then it lies in right subtree
-	else if( cmp_keys(key, root->key) > 0 )
-		root->right = avl_delete_node(root->right, key, cmp_keys);
-
-	// if key is same as root's key, then this is the node
-	// to be deleted
-	else
-	{
-		// node with only one child or no child
-		if( (root->left == NULL) || (root->right == NULL) )
-		{
-			avl_node * temp = root->left ? root->left : root->right;
-
-			// No child case
-			if(temp == NULL)
-			{
-				temp = root;
-				root = NULL;
-			}
-			else // One child case
-				*root = *temp; // Copy the contents of the non-empty child
-
-			free(temp);
+	if (z == root) {
+		instance->root = b;
+		b->parent = NULL;
+	}
+	else {
+		if (z->parent->left == z) {
+			avl_make_left_child(z->parent, b);
 		}
-		else
-		{
-			// node with two children: Get the inorder successor (smallest
-			// in the right subtree)
-			avl_node * temp = avl_min_value_node(root->right);
+		else {
+			avl_make_right_child(z->parent, b);
+		}	
+	}
 
-			// Copy the inorder successor's data to this node
-			root->key = temp->key;
+	if (b->left != x && b->left != y && b->left != z) {
+		avl_make_right_child(a, b->left);
+	}
 
-			// Delete the inorder successor
-			root->right = avl_delete_node(root->right, temp->key, cmp_keys);
+	if (b->right != x && b->right != y && b->right != z) {
+		avl_make_left_child(c, b->right);
+	}
+
+	avl_make_left_child(b, a);
+	avl_make_right_child(b, c);
+
+	return b;
+}
+
+void avl_rebalance(sb_avl * instance, avl_node * v)
+{
+	avl_node * z = v;
+	if (v == NULL || v == avl_root(instance)) {
+		return;
+	}
+	while (!(z == avl_root(instance))) {
+		z = z->parent;
+		avl_set_height(z);
+		if (!avl_is_balanced(z)) {
+			avl_node * x = avl_tall_grandchild(z);
+			z = avl_restructure(instance, x);
+			avl_set_height(z->left);
+			avl_set_height(z->right);
+			avl_set_height(z);
 		}
 	}
+}
 
-	// If the tree had only one node then return
-	if (root == NULL)
-		return root;
+avl_node * avl_delete(sb_avl * instance, avl_node * p)
+{
+	/** Case 1: p has no children **/
+	if (p->left == NULL && p->right == NULL) {
+		if (p == avl_root(instance)) {
+			free(avl_root(instance));
+			instance->root = NULL;
+			return NULL;
+		}
 
-	// STEP 2: UPDATE HEIGHT OF THE CURRENT NODE
-	root->height = avl_max(avl_height(root->left), avl_height(root->right)) + 1;
+		avl_node * parent = p->parent;
 
-	// STEP 3: GET THE BALANCE FACTOR OF THIS NODE (to check whether
-	//  this node became unbalanced)
-	int balance = avl_get_balance(root);
-
-	// If this node becomes unbalanced, then there are 4 cases
-
-	// Left Left Case
-	if (balance > 1 && avl_get_balance(root->left) >= 0)
-		return avl_right_rotate(root);
-
-	// Left Right Case
-	if (balance > 1 && avl_get_balance(root->left) < 0)
-	{
-		root->left = avl_left_rotate(root->left);
-		return avl_right_rotate(root);
+		if (parent->left == p) {
+			parent->left = NULL;
+		}
+		else {
+			parent->right = NULL;
+		}
+		
+		free(p);
+		return parent;
 	}
 
-	// Right Right Case
-	if (balance < -1 && avl_get_balance(root->right) <= 0)
-		return avl_left_rotate(root);
+	/** Case 2: p has 1 child **/
+	if (p->right == NULL) {
+		if (p == avl_root(instance)) {
+			instance->root = instance->root->left;
+			free(p);
+			return instance->root;
+		}
 
-	// Right Left Case
-	if (balance < -1 && avl_get_balance(root->right) > 0)
-	{
-		root->right = avl_right_rotate(root->right);
-		return avl_left_rotate(root);
+		avl_node * parent = p->parent;
+
+		if (parent->left == p) {
+			parent->left = p->left;
+		}
+		else {
+			parent->right = p->left;
+		}
+
+		free(p);
+		return parent;
 	}
 
-	return root;
+	if (p->left == NULL) {
+		if ( p == avl_root(instance) ) {
+			instance->root = instance->root->right;
+			free(p);
+			return instance->root;
+		}
+
+		avl_node * parent = p->parent;
+
+		if (parent->left == p) {
+			parent->left = p->right;
+		}
+		else {
+			parent->right = p->right;
+		}
+
+		free(p);
+		return parent;
+	}
+	
+	/** Case 3: p has 2 children **/
+    if ( p->right->left == NULL ) {
+
+		// overwrite p with p->right.
+		// This leaves p->right with no way to
+		// get to it. So remove p->right.
+		avl_node * tmp = p->right;
+    	p->key = p->right->key;
+		p->value = p->right->value;
+        p->right = p->right->right;
+
+		free(tmp);
+		return p->parent;
+    }
+
+    avl_node * succ = p->right;
+    avl_node * succParent = p;
+
+    while ( succ->left != NULL ) {
+    	succParent = succ;
+        succ = succ->left;
+    }
+
+    p->key = succ->key;
+	p->value = succ->value;
+    succParent->left = succ->right;
+	free(succ);
+	return succParent;
 }
