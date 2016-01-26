@@ -29,6 +29,7 @@ int main(int argc, char ** argv)
 {
 	char * string, * coreyStr;
 	int * val, * coreyVal;
+	avl_node * n;
 
 	// create the AVL tree
 	sb_avl * tree;
@@ -41,28 +42,25 @@ int main(int argc, char ** argv)
 	val = (int *) malloc(sizeof(int));
 	*val = 100;
 	avl_insert(tree, (void *) string, (void *) val);
-
-	printf("fine here.\n");
+	printf("inserted Alfon.\n");
 
 	string = strdup("Bekah");
 	val = (int *) malloc(sizeof(int));
 	*val = 150;
 	avl_insert(tree, (void *) string, (void *) val);
-
-	printf("still fine.\n");
+	printf("inserted Bekah.\n");
 
 	string = strdup("Debra");
 	val = (int *) malloc(sizeof(int));
 	*val = 45;
 	avl_insert(tree, (void *) string, (void *) val);
+	printf("inserted Debra.\n");
 
-	printf("a-ok.\n");
 	coreyStr = strdup("Corey");
 	coreyVal = (int *) malloc(sizeof(int));
 	*coreyVal = 80;
 	avl_insert(tree, (void *) coreyStr, (void *) coreyVal);
-
-	printf("made it through the inserts.\n");
+	printf("inserted Corey.\n");
 
 	printf("AVL size: %d\n", avl_size(tree));
 
@@ -73,8 +71,8 @@ int main(int argc, char ** argv)
 	val = (int *) avl_find(tree, "Alfon");
 	printf("Alfon's score: %d\n", *val);
 
-	val = (int *) avl_find(tree, "Debra");
-	printf("Debra's score: %d\n", *val);
+	val = (int *) avl_find(tree, "Corey");
+	printf("Corey's score: %d\n", *val);
 
 	// let's search for something that isn't there
 	val = (int *) avl_find(tree, "Zach");
@@ -85,7 +83,22 @@ int main(int argc, char ** argv)
 		printf("Zach was found? Error.\n");
 	}
 
-	// let's go through them now that one is gone.
+	// Alright; time to delete a few
+	n = avl_find_node(tree, "Alfon");
+	string = (char *) n->key;
+	val = (int *) n->value;
+	avl_erase(tree, "Alfon");
+	free(string);
+	free(val);
+
+	n = avl_find_node(tree, "Debra");
+	string = (char *) n->key;
+	val = (int *) n->value;
+	avl_erase(tree, "Debra");
+	free(string);
+	free(val);
+
+	// let's go through them now that two are gone.
 	avl_preorder(tree->root, print_elements, NULL);
 
 	// Let's free the rest of the memory

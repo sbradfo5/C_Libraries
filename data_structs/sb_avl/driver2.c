@@ -17,11 +17,31 @@ int comp_strs(void * a, void * b)
 	return strcmp((char *) a, (char *) b);
 }
 
+void find_wrong_parent(avl_node * n, void * data)
+{
+	if (n->parent) {
+		if (n->parent->parent == n) {
+			printf("FOUND WRONG PARENT: %s %d\n", (char *) n->key, *((int *) n->value));
+		}
+	}
+}
 void print_elements(avl_node * n, void * data)
 {
 	int * num;
 	num = (int *) n->value;
 	printf("key: %s, value: %d\n", (char *) n->key, *num);
+}
+
+void find_and_erase(sb_avl * tree, char * key)
+{
+	int * value;
+	char * str;
+	avl_node * n = avl_find_node(tree, (void *) key);
+	value = (int *) n->value;
+	str = (char *) n->key; 
+	avl_erase(tree, (void *) key);
+	free(str);
+	free(value);
 }
 
 void free_elements(avl_node * n, void * data)
@@ -63,8 +83,6 @@ int main(int argc, char ** argv)
 	FILE * f;
 	sb_avl * tree;
 	int * value;
-	avl_node * n;
-	char * key;
 
 	// create the AVL tree
 	tree = avl_init(comp_strs);
@@ -84,41 +102,29 @@ int main(int argc, char ** argv)
 	avl_inorder(tree->root, print_elements, NULL);
 
 	// print the number of names
-	printf("AVL Size: %d\n", avl_size(tree));
+	printf("\nAVL Size: %d\n\n", avl_size(tree));
 
 	// find an element
 	value = avl_find(tree, "Sebastian");
-
-	printf("Sebastian's value: %d\n", *value);
 	
-	n = avl_find_node(tree->root, "Sebastian", comp_strs);
-	value = (int *) n->value;
-	key = (char *) n->key; 
-	avl_erase(tree, "Sebastian");
-	free(key);
-	free(value);
+	printf("Sebastian's value: %d\n\n", *value);
+	
+	avl_inorder(tree->root, find_wrong_parent, NULL);
 
-	n = avl_find_node(tree->root, "Brody", comp_strs);
-	value = (int *) n->value;
-	key = (char *) n->key; 
-	avl_erase(tree, "Brody");
+	find_and_erase(tree, "Sebastian");
+	find_and_erase(tree, "Brody");
+	find_and_erase(tree, "Jaxson");
+	find_and_erase(tree, "George");
+	find_and_erase(tree, "Eli");
+	find_and_erase(tree, "Aaliyah");
+	find_and_erase(tree, "Savannah");
+	find_and_erase(tree, "Zoey");
+	find_and_erase(tree, "Zoe");
+	find_and_erase(tree, "Victoria");
 
-	n = avl_find_node(tree->root, "Jaxson", comp_strs);
-	value = (int *) n->value;
-	key = (char *) n->key; 
-	avl_erase(tree, "Jaxson");
+	avl_inorder(tree->root, find_wrong_parent, NULL);
 
-	n = avl_find_node(tree->root, "George", comp_strs);
-	value = (int *) n->value;
-	key = (char *) n->key; 
-	avl_erase(tree, "George");
-
-	n = avl_find_node(tree->root, "Eli", comp_strs);
-	value = (int *) n->value;
-	key = (char *) n->key; 
-	avl_erase(tree, "Eli");
-
-	printf("AVL Size after 5 deletions: %d\n", avl_size(tree));
+	printf("AVL Size after 10 deletions: %d\n\n", avl_size(tree));
 
 	avl_inorder(tree->root, print_elements, NULL);
 

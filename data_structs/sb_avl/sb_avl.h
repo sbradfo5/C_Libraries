@@ -34,6 +34,8 @@ void avl_postorder(avl_node * root, void (*call_back)(avl_node * n, void * d), v
 
 void * avl_find(sb_avl * instance, void * key);
 
+avl_node * avl_find_node(sb_avl * instance, void * key);
+
 int avl_size(sb_avl * instance);
 
 void avl_insert(sb_avl * instance, void * key, void * data);
@@ -44,40 +46,24 @@ avl_node * avl_find_max(sb_avl * instance);
 
 avl_node * avl_new_node(void * key, void * data);
 
-int avl_height(avl_node * v);
-
-void avl_set_height(avl_node * v);
-
-int avl_max(int a, int b);
-
-int avl_is_balanced(avl_node * v);
-
-avl_node * avl_tall_grandchild(avl_node * z);
-
-void avl_expand_external(avl_node * p);
-
-int avl_is_internal(avl_node * v);
-
-int avl_is_external(avl_node * v);
-
 void avl_destroy_callback(avl_node * n, void * d);
 
 avl_node * avl_finder(void * key, avl_node * node, int (*cmp_keys)(void * a, void * b));
 
 int avl_size_helper(avl_node * root);
 
-int avl_max(int a, int b);
+void avl_delete(sb_avl * instance, avl_node * p);
 
-int avl_get_balance(avl_node * N);
+avl_node * avl_trinode_restructure(sb_avl * instance, avl_node * x, avl_node * y, avl_node * z);
 
-void avl_make_left_child(avl_node * a, avl_node * b);
+void avl_rebalance(sb_avl * instance, avl_node * p);
 
-void avl_make_right_child(avl_node * a, avl_node * b);
+void avl_recomp_height( avl_node * x );
 
-avl_node * avl_restructure(sb_avl * instance, avl_node * x);
+int avl_diff_height(avl_node * t1, avl_node * t2);
 
-void avl_rebalance(sb_avl * instance, avl_node * v);
+int avl_max_height( avl_node * t1, avl_node * t2 );
 
-avl_node * avl_delete(sb_avl * instance, avl_node * p);
+avl_node * avl_taller_child(avl_node * p);
 
 #endif
