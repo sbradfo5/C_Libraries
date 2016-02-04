@@ -34,11 +34,13 @@ void avl_destroy(sb_avl * instance)
 	return;
 }
 
+// return the root
 avl_node * avl_root(sb_avl * instance)
 {
 	return instance->root;
 }
 
+// erase an entry
 void avl_erase(sb_avl * instance, void * key)
 {
 	avl_node * v = avl_finder(key, avl_root(instance), instance->cmp_keys);

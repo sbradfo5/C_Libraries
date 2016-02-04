@@ -18,32 +18,49 @@ typedef struct avl_tree {
 	int (*cmp_keys)(void * a, void * b);
 } sb_avl;
 
+/** User Interface Functions **/
+// Create the AVL Tree; initialized with a comparison function
+// that returns -1 for a < b, 0 for a = b, and 1 for a > b
 sb_avl * avl_init(int (*comp)(void * a, void * b));
 
+// Free the nodes in the AVL tree and the instance itself
 void avl_destroy(sb_avl * instance);
 
+// Return the root of the AVL tree
 avl_node * avl_root(sb_avl * instance);
 
+// Remove the node with a specific key from the tree
 void avl_erase(sb_avl * instance, void * key);
 
+// preorder traversal with a callback function;
+// call back function is passed the current node and any data you supply
 void avl_preorder(avl_node * root, void (*call_back)(avl_node * n, void * d), void * user_data);
 
+// inorder traversal with a callback function
 void avl_inorder(avl_node * root, void (*call_back)(avl_node * n, void * d), void * user_data);
 
 void avl_postorder(avl_node * root, void (*call_back)(avl_node * n, void * d), void * user_data);
 
+// find a value with a specific key in the tree
 void * avl_find(sb_avl * instance, void * key);
 
+// same as avl_find but instead of returning a value; 
+// return the node itself
 avl_node * avl_find_node(sb_avl * instance, void * key);
 
+// how many nodes in the AVL?
 int avl_size(sb_avl * instance);
 
+// put an entry into the tree
 void avl_insert(sb_avl * instance, void * key, void * data);
 
+// return the minimum node
 avl_node * avl_find_min(sb_avl * instance);
 
+// return the maximum node
 avl_node * avl_find_max(sb_avl * instance);
 
+/** Internal Book Keeping Functions **/
 avl_node * avl_new_node(void * key, void * data);
 
 void avl_destroy_callback(avl_node * n, void * d);
