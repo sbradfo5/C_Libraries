@@ -11,7 +11,9 @@ int main(int argc, char ** argv)
 	while (dsr_getline(reader, stdin) != -1) {
 		printf("%s\n", reader->line);
 	}
-  
+ 
+  printf("line size: %d\n", reader->lineSize);
+
   dsr_destroy(reader);
 
 	return EXIT_SUCCESS;
