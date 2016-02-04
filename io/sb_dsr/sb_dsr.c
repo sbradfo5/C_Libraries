@@ -6,7 +6,7 @@ sb_dsr * dsr_init()
 {
 	sb_dsr * instance;
 	instance = (sb_dsr *) malloc(sizeof(sb_dsr));
-	instance->line = (char *) calloc(1024, 1);
+	instance->line = (char *) calloc(1024, sizeof(char));
 	instance->lineSize = 1024;
 	instance->line[0] = '\0';
 	return instance;
@@ -36,7 +36,7 @@ int dsr_getline(sb_dsr * instance, FILE * fh)
 		if (bytesRead + 1 >= instance->lineSize - 1) {
 
 			// alloc double the memory
-			newBuf = (char *) calloc(instance->lineSize * 2, 1);
+			newBuf = (char *) calloc(instance->lineSize * 2, sizeof(char));
 			newBuf[instance->lineSize * 2 - 1] = '\0';
 
 			// copy the contents of line to newBuf
