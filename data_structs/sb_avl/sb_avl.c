@@ -139,7 +139,7 @@ void avl_insert(sb_avl * instance, void * key, void * data)
 			prev_node = curr_node;       // Remember prev. node
 			curr_node = curr_node->left;  // Continue search in left subtree
 		}
-		else if ( instance->cmp_keys(key, curr_node->key ) > 0 )
+		else if ( instance->cmp_keys(key, curr_node->key ) >= 0 )
 		{
 			prev_node = curr_node;       // Remember prev. node
 			curr_node = curr_node->right; // Continue search in right subtree
